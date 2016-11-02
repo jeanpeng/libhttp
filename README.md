@@ -9,7 +9,7 @@
 ###1.初始化
 HttpRequestManager.getInstance().init(context);
 
-###2.发起请求
+###2.构造数据结构
 1）构造ResponseModel
 public class DialogBean {
    //定义response数据结构
