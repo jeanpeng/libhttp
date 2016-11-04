@@ -3,6 +3,7 @@ package com.quncao.core.http;
 import com.quncao.core.http.annotation.HttpReqParam;
 
 import java.util.TreeMap;
+import java.util.Map;
 
 /**
  * Created by pengjin on 2016/10/30.
