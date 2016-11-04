@@ -63,7 +63,7 @@ public class HttpRequestProxy extends AbsHttpRequestProxy{
     }
 
     public HttpRequestProxy(){
-        
+
     }
 
     public static Builder get(){

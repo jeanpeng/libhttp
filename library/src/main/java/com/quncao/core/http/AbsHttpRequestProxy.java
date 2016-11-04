@@ -204,7 +204,10 @@ public abstract class AbsHttpRequestProxy<T> {
         if (!TextUtils.isEmpty(tag)) {
             request.setTag(tag);
         }
-        request.setHeaders(header);
+        Map<String,String> header = getHeader();
+        if(header != null && header.size() > 0){
+            request.setHeaders(header);
+        }
         request.setShouldCache(cache);
         request.setRetryPolicy(new DefaultRetryPolicy(
                 DEFAULT_SOCKET_TIMEOUT_MS,
