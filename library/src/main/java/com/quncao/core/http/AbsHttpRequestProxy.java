@@ -38,7 +38,6 @@ public abstract class AbsHttpRequestProxy<T> {
     protected String tag;
     protected boolean gzip = false;
     protected boolean cache = false;
-    private Map<String,String> header = new HashMap<String,String>();
 
 
     /**
@@ -54,6 +53,9 @@ public abstract class AbsHttpRequestProxy<T> {
      * @return
      */
     protected abstract TreeMap<String, String> getCommonParamMap();
+
+
+    protected abstract Map<String,String> getHeader();
 
 
     public interface RequestListener<T> {
@@ -100,7 +102,7 @@ public abstract class AbsHttpRequestProxy<T> {
      */
     private void doGet() {
         RequestQueue requestQueue = HttpRequestManager.getInstance().getRequestQueue();
-        Map<String, String> params = getRequestParamMap(requestParamBody);
+        Map<String, String> params = getRequestParamMap();
         String requestUrl = buildGetRequestUrl(protocal, params);
         if (gzip) {
             request = new GZipRequest(requestUrl, new Listener<String>() {
@@ -120,7 +122,6 @@ public abstract class AbsHttpRequestProxy<T> {
                     listener.onFailed(error);
                 }
             });
-            header.put("Accept-Encoding", "gzip,deflate");
 
         } else {
             request = new GsonRequest<T>(requestUrl, clazz, null,
@@ -141,7 +142,10 @@ public abstract class AbsHttpRequestProxy<T> {
         if (!TextUtils.isEmpty(tag)) {
             request.setTag(tag);
         }
-        request.setHeaders(header);
+        Map<String,String> header = getHeader();
+        if(header != null && header.size() > 0){
+            request.setHeaders(header);
+        }
         request.setShouldCache(cache);
         request.setRetryPolicy(new DefaultRetryPolicy(
                 DEFAULT_SOCKET_TIMEOUT_MS,
@@ -161,7 +165,7 @@ public abstract class AbsHttpRequestProxy<T> {
         if (params == null) {
             params = new TreeMap<String, String>();
         }
-        params.putAll(getRequestParamMap(requestParamBody));
+        params.putAll(getRequestParamMap());
         if (gzip) {
             request = new GZipRequest(Method.POST, requestUrl, new Listener<String>() {
                 @Override
@@ -180,7 +184,6 @@ public abstract class AbsHttpRequestProxy<T> {
                     listener.onFailed(error);
                 }
             });
-            header.put("Accept-Encoding", "gzip,deflate");
 
         } else {
             request = new GsonRequest<T>(Method.POST, requestUrl, clazz, null,
@@ -214,10 +217,10 @@ public abstract class AbsHttpRequestProxy<T> {
     /**
      * 获取请求参数
      */
-    private TreeMap<String, String> getRequestParamMap(Object publicFiled) {
+    public TreeMap<String, String> getRequestParamMap() {
         TreeMap<String, String> filedMap = new TreeMap<String, String>();
         // 反射publicFiled类的所有字段
-        Class cla = publicFiled.getClass();
+        Class cla = requestParamBody.getClass();
 
         // 获得该类下面所有的字段集合
         Field[] filed = cla.getDeclaredFields();
@@ -228,7 +231,7 @@ public abstract class AbsHttpRequestProxy<T> {
 
             try {
                 java.lang.reflect.Method getMethod = cla.getMethod(getMethodName, new Class[]{});
-                Object value = getMethod.invoke(publicFiled, new Object[]{}); // 这个对象字段get方法的值
+                Object value = getMethod.invoke(requestParamBody, new Object[]{}); // 这个对象字段get方法的值
                 filedMap.put(filedName, value + ""); // 添加到Map集合
 
             } catch (SecurityException e) {
