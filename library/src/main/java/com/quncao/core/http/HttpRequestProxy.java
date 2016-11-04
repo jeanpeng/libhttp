@@ -83,7 +83,7 @@ public class HttpRequestProxy extends AbsHttpRequestProxy{
     }
 
     @Override
-    protected Map<String,String> getHeader(){
+    protected TreeMap<String,String> getHeader(){
         return null;
     };
 

@@ -55,7 +55,7 @@ public abstract class AbsHttpRequestProxy<T> {
     protected abstract TreeMap<String, String> getCommonParamMap();
 
 
-    protected abstract Map<String,String> getHeader();
+    protected abstract TreeMap<String,String> getHeader();
 
 
     public interface RequestListener<T> {
@@ -220,7 +220,7 @@ public abstract class AbsHttpRequestProxy<T> {
     /**
      * 获取请求参数
      */
-    public TreeMap<String, String> getRequestParamMap() {
+    protected TreeMap<String, String> getRequestParamMap() {
         TreeMap<String, String> filedMap = new TreeMap<String, String>();
         // 反射publicFiled类的所有字段
         Class cla = requestParamBody.getClass();
