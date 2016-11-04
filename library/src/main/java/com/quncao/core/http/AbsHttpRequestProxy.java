@@ -65,7 +65,7 @@ public abstract class AbsHttpRequestProxy<T> {
     }
 
 
-  /*  @SuppressWarnings("unchecked")
+    @SuppressWarnings("unchecked")
     public AbsHttpRequestProxy(Object requestParamBody, RequestListener<T> listener) {
         this.listener = listener;
         this.requestParamBody = requestParamBody;
@@ -74,7 +74,7 @@ public abstract class AbsHttpRequestProxy<T> {
         protocal = annotation.protocal();
         clazz = (Class<T>) annotation.responseType();
         method = annotation.method();
-    }*/
+    }
 
 
     /**
