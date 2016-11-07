@@ -102,7 +102,7 @@ public abstract class AbsHttpRequestProxy<T> {
      */
     private void doGet() {
         RequestQueue requestQueue = HttpRequestManager.getInstance().getRequestQueue();
-        Map<String, String> params = getRequestParamMap();
+        Map<String, String> params = getRequestParams();
         String requestUrl = buildGetRequestUrl(protocal, params);
         if (gzip) {
             request = new GZipRequest(requestUrl, new Listener<String>() {
@@ -165,7 +165,7 @@ public abstract class AbsHttpRequestProxy<T> {
         if (params == null) {
             params = new TreeMap<String, String>();
         }
-        params.putAll(getRequestParamMap());
+        params.putAll(getRequestParams());
         if (gzip) {
             request = new GZipRequest(Method.POST, requestUrl, new Listener<String>() {
                 @Override
@@ -220,7 +220,7 @@ public abstract class AbsHttpRequestProxy<T> {
     /**
      * 获取请求参数
      */
-    protected TreeMap<String, String> getRequestParamMap() {
+    private TreeMap<String, String> getRequestParams() {
         TreeMap<String, String> filedMap = new TreeMap<String, String>();
         // 反射publicFiled类的所有字段
         Class cla = requestParamBody.getClass();
@@ -236,6 +236,42 @@ public abstract class AbsHttpRequestProxy<T> {
                 java.lang.reflect.Method getMethod = cla.getMethod(getMethodName, new Class[]{});
                 Object value = getMethod.invoke(requestParamBody, new Object[]{}); // 这个对象字段get方法的值
                 filedMap.put(filedName, value + ""); // 添加到Map集合
+
+            } catch (SecurityException e) {
+                e.printStackTrace();
+            } catch (NoSuchMethodException e) {
+                e.printStackTrace();
+            } catch (IllegalArgumentException e) {
+                e.printStackTrace();
+            } catch (IllegalAccessException e) {
+                e.printStackTrace();
+            } catch (InvocationTargetException e) {
+                e.printStackTrace();
+            }
+
+        }
+        return filedMap;
+    }
+
+    /**
+     * 获取请求参数
+     */
+    protected TreeMap<String, Object> getRequestParamMap() {
+        TreeMap<String, Object> filedMap = new TreeMap<String, Object>();
+        // 反射publicFiled类的所有字段
+        Class cla = requestParamBody.getClass();
+
+        // 获得该类下面所有的字段集合
+        Field[] filed = cla.getDeclaredFields();
+        for (Field fd : filed) {
+            String filedName = fd.getName();
+            String firstLetter = filedName.substring(0, 1).toUpperCase(); // 获得字段第一个字母大写
+            String getMethodName = "get" + firstLetter + filedName.substring(1); // 转换成字段的get方法
+
+            try {
+                java.lang.reflect.Method getMethod = cla.getMethod(getMethodName, new Class[]{});
+                Object value = getMethod.invoke(requestParamBody, new Object[]{}); // 这个对象字段get方法的值
+                filedMap.put(filedName, value); // 添加到Map集合
 
             } catch (SecurityException e) {
                 e.printStackTrace();

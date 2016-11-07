@@ -63,6 +63,7 @@ public class HttpRequestProxy extends AbsHttpRequestProxy{
         method = annotation.method();
     }
 
+
     public HttpRequestProxy(){
 
     }
