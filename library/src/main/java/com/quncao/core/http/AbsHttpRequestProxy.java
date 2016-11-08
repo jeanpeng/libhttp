@@ -12,7 +12,6 @@ import com.android.volley.error.VolleyError;
 import com.android.volley.request.GZipRequest;
 import com.android.volley.request.GsonRequest;
 import com.google.gson.Gson;
-import com.quncao.core.http.Util.JsonUtil;
 import com.quncao.core.http.annotation.HttpReqParam;
 import com.quncao.core.http.annotation.HttpReqParam.HttpReqMethod;
 import com.quncao.core.http.request.GsonRequestEX;
@@ -173,9 +172,15 @@ public abstract class AbsHttpRequestProxy<T> {
             });
         }else if(format == HttpReqParam.DataFormat.JSON){ // JSON格式的数据
             try {
-                // 请求参数
-                JSONObject jobj = JsonUtil.beanToJsonObject(requestParamBody);
                 // 公共参数
+                JSONObject jobj = new JSONObject();
+                TreeMap<String, String> params = getCommonParamMap();
+                if(params != null){
+                    for(Map.Entry<String,String> entry : params.entrySet()){
+                        jobj.put(entry.getKey(),entry.getValue());
+                    }
+                }
+                // 请求参数
                 TreeMap<String, Object> reqParams = getRequestParamMap();
                 if(reqParams != null){
                     for(Map.Entry<String,Object> entry : reqParams.entrySet()){
