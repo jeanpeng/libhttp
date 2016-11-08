@@ -59,6 +59,7 @@ public class HttpRequestProxy extends AbsHttpRequestProxy{
         HttpReqParam annotation = requestParamBody.getClass().getAnnotation(
                 HttpReqParam.class);
         protocal = annotation.protocal();
+        format = annotation.format();
         clazz = (Class) annotation.responseType();
         method = annotation.method();
     }

@@ -12,7 +12,13 @@ import com.android.volley.error.VolleyError;
 import com.android.volley.request.GZipRequest;
 import com.android.volley.request.GsonRequest;
 import com.google.gson.Gson;
+import com.quncao.core.http.Util.JsonUtil;
+import com.quncao.core.http.annotation.HttpReqParam;
 import com.quncao.core.http.annotation.HttpReqParam.HttpReqMethod;
+import com.quncao.core.http.request.GsonRequestEX;
+import com.quncao.core.http.request.JsonObjectRequestEX;
+
+import org.json.JSONObject;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
@@ -35,6 +41,7 @@ public abstract class AbsHttpRequestProxy<T> {
     protected Object requestParamBody;
     protected String protocal;
     protected HttpReqMethod method;
+    protected HttpReqParam.DataFormat format;
     protected String tag;
     protected boolean gzip = false;
     protected boolean cache = false;
@@ -55,7 +62,7 @@ public abstract class AbsHttpRequestProxy<T> {
     protected abstract TreeMap<String, String> getCommonParamMap();
 
 
-    protected abstract TreeMap<String,String> getHeader();
+    protected abstract TreeMap<String, String> getHeader();
 
 
     public interface RequestListener<T> {
@@ -104,46 +111,26 @@ public abstract class AbsHttpRequestProxy<T> {
         RequestQueue requestQueue = HttpRequestManager.getInstance().getRequestQueue();
         Map<String, String> params = getRequestParams();
         String requestUrl = buildGetRequestUrl(protocal, params);
-        if (gzip) {
-            request = new GZipRequest(requestUrl, new Listener<String>() {
-                @Override
-                public void onResponse(String response) {
-                    if (!TextUtils.isEmpty(response)) {
-                        try {
-                            listener.onSuccess(new Gson().fromJson(response, clazz));
-                        } catch (Exception error) {
-                            listener.onFailed(new VolleyError(error.getMessage()));
-                        }
+        request = new GsonRequestEX<T>(requestUrl, clazz, gzip, null,
+                new Listener<T>() {
+                    @Override
+                    public void onResponse(T response) {
+                        // 请求成功
+                        listener.onSuccess(response);
                     }
-                }
-            }, new Response.ErrorListener() {
-                @Override
-                public void onErrorResponse(VolleyError error) {
-                    listener.onFailed(error);
-                }
-            });
+                }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                // 请求失败
+                listener.onFailed(error);
+            }
+        });
 
-        } else {
-            request = new GsonRequest<T>(requestUrl, clazz, null,
-                    new Listener<T>() {
-                        @Override
-                        public void onResponse(T response) {
-                            // 请求成功
-                            listener.onSuccess(response);
-                        }
-                    }, new Response.ErrorListener() {
-                @Override
-                public void onErrorResponse(VolleyError error) {
-                    // 请求失败
-                    listener.onFailed(error);
-                }
-            });
-        }
         if (!TextUtils.isEmpty(tag)) {
             request.setTag(tag);
         }
-        Map<String,String> header = getHeader();
-        if(header != null && header.size() > 0){
+        Map<String, String> header = getHeader();
+        if (header != null && header.size() > 0) {
             request.setHeaders(header);
         }
         request.setShouldCache(cache);
@@ -161,32 +148,16 @@ public abstract class AbsHttpRequestProxy<T> {
     private void doPost() {
         RequestQueue requestQueue = HttpRequestManager.getInstance().getRequestQueue();
         String requestUrl = buildPostRequestUrl(protocal);
-        TreeMap<String, String> params = getCommonParamMap();
-        if (params == null) {
-            params = new TreeMap<String, String>();
-        }
-        params.putAll(getRequestParams());
-        if (gzip) {
-            request = new GZipRequest(Method.POST, requestUrl, new Listener<String>() {
-                @Override
-                public void onResponse(String response) {
-                    if (!TextUtils.isEmpty(response)) {
-                        try {
-                            listener.onSuccess(new Gson().fromJson(response, clazz));
-                        } catch (Exception error) {
-                            listener.onFailed(new VolleyError(error.getMessage()));
-                        }
-                    }
-                }
-            }, new Response.ErrorListener() {
-                @Override
-                public void onErrorResponse(VolleyError error) {
-                    listener.onFailed(error);
-                }
-            });
 
-        } else {
-            request = new GsonRequest<T>(Method.POST, requestUrl, clazz, null,
+        if (format == HttpReqParam.DataFormat.MAP) {// MAP格式的数据
+            // 公共参数
+            TreeMap<String, String> params = getCommonParamMap();
+            if (params == null) {
+                params = new TreeMap<String, String>();
+            }
+            // 请求参数
+            params.putAll(getRequestParams());
+            request = new GsonRequestEX<T>(Method.POST, requestUrl,gzip, clazz, null,
                     params, new Listener<T>() {
 
                 @Override
@@ -200,12 +171,40 @@ public abstract class AbsHttpRequestProxy<T> {
                     listener.onFailed(error);
                 }
             });
+        }else if(format == HttpReqParam.DataFormat.JSON){ // JSON格式的数据
+            try {
+                // 请求参数
+                JSONObject jobj = JsonUtil.beanToJsonObject(requestParamBody);
+                // 公共参数
+                TreeMap<String, Object> reqParams = getRequestParamMap();
+                if(reqParams != null){
+                    for(Map.Entry<String,Object> entry : reqParams.entrySet()){
+                        jobj.put(entry.getKey(),entry.getValue());
+                    }
+                }
+                request = new JsonObjectRequestEX(requestUrl, jobj, clazz, gzip, new Listener<T>() {
+                    @Override
+                    public void onResponse(T response) {
+                        // 请求成功
+                        listener.onSuccess(response);
+                    }
+                }, new Response.ErrorListener() {
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        // 请求失败
+                        listener.onFailed(error);
+                    }
+                });
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
+
         if (!TextUtils.isEmpty(tag)) {
             request.setTag(tag);
         }
-        Map<String,String> header = getHeader();
-        if(header != null && header.size() > 0){
+        Map<String, String> header = getHeader();
+        if (header != null && header.size() > 0) {
             request.setHeaders(header);
         }
         request.setShouldCache(cache);

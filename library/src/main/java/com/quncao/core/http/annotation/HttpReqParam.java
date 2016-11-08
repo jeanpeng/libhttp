@@ -18,10 +18,37 @@ public @interface HttpReqParam {
 		HTTP_GET, HTTP_POST
 	}
 
+	/**
+	* 数据类型，用于post协议
+	*
+	**/
+	public enum DataFormat{
+		MAP,JSON
+	}
+
+	/**
+	 * 接口Url地址
+	 *
+	 **/
 	String protocal();
 
+	/**
+	 * response类型
+	 *
+	 **/
 	Class<?> responseType();
 
+	/**
+	 * 协议类型，默认Get
+	 *
+	 **/
 	HttpReqMethod method() default HttpReqMethod.HTTP_GET;
+
+
+	/**
+	 * 数据类型，用于post协议
+	 *
+	 **/
+	DataFormat format() default DataFormat.MAP;
 
 }
