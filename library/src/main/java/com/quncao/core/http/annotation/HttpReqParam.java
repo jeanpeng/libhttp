@@ -42,13 +42,13 @@ public @interface HttpReqParam {
 	 * 协议类型，默认Get
 	 *
 	 **/
-	HttpReqMethod method() default HttpReqMethod.HTTP_GET;
+	HttpReqMethod method() default HttpReqMethod.HTTP_POST;
 
 
 	/**
 	 * 数据类型，用于post协议
 	 *
 	 **/
-	DataFormat format() default DataFormat.MAP;
+	DataFormat format() default DataFormat.JSON;
 
 }
