@@ -39,7 +39,7 @@ public class JsonObjectRequestEX<T> extends JsonRequest<T> {
      */
     public JsonObjectRequestEX(int method, String url, JSONObject jsonRequest, Class<T> clazz, boolean gzip,
                                Response.Listener<T> listener, Response.ErrorListener errorListener) {
-        super(method, url, (jsonRequest == null) ? null : jsonRequest.toString(), listener,
+        super(method, url, (jsonRequest == null) ? null : (jsonRequest.length() == 0) ? "" : jsonRequest.toString(), listener,
                 errorListener);
         this.mClazz = clazz;
         this.mGzip = gzip;
