@@ -37,26 +37,30 @@ public class JsonObjectRequestEX<T> extends JsonRequest<T> {
      * @param listener      Listener to receive the JSON response
      * @param errorListener Error listener, or null to ignore errors.
      */
-    public JsonObjectRequestEX(int method, String url, JSONObject jsonRequest, Class<T> clazz, boolean gzip,
+    public JsonObjectRequestEX(int method, String url, String jsonRequest, Class<T> clazz, boolean gzip,
+                               Response.Listener<T> listener, Response.ErrorListener errorListener) {
+        super(method, url, jsonRequest, listener, errorListener);
+        this.mClazz = clazz;
+        this.mGzip = gzip;
+    }
+
+    /*public JsonObjectRequestEX(int method, String url, String jsonRequest, Class<T> clazz, boolean gzip,
                                Response.Listener<T> listener, Response.ErrorListener errorListener) {
         super(method, url, (jsonRequest == null) ? null : (jsonRequest.length() == 0) ? "" : jsonRequest.toString(), listener,
                 errorListener);
         this.mClazz = clazz;
         this.mGzip = gzip;
-    }
+    }*/
 
     /**
      * Constructor which defaults to <code>GET</code> if <code>jsonRequest</code> is
      * <code>null</code>, <code>POST</code> otherwise.
      */
-    public JsonObjectRequestEX(String url, JSONObject jsonRequest, Class<T> clazz, boolean gzip, Response.Listener<T> listener,
+/*    public JsonObjectRequestEX(String url, String jsonString, Class<T> clazz, boolean gzip, Response.Listener<T> listener,
                                Response.ErrorListener errorListener) {
         this(jsonRequest == null ? Method.GET : Method.POST, url, jsonRequest, clazz, gzip,
                 listener, errorListener);
-    }
-
-
-
+    }*/
     @Override
     protected Response<T> parseNetworkResponse(NetworkResponse response) {
         String json = "";

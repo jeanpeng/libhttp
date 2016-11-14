@@ -9,19 +9,14 @@ import com.android.volley.RequestQueue;
 import com.android.volley.Response;
 import com.android.volley.Response.Listener;
 import com.android.volley.error.VolleyError;
-import com.android.volley.request.GZipRequest;
-import com.android.volley.request.GsonRequest;
 import com.google.gson.Gson;
 import com.quncao.core.http.annotation.HttpReqParam;
 import com.quncao.core.http.annotation.HttpReqParam.HttpReqMethod;
 import com.quncao.core.http.request.GsonRequestEX;
 import com.quncao.core.http.request.JsonObjectRequestEX;
 
-import org.json.JSONObject;
-
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -52,13 +47,6 @@ public abstract class AbsHttpRequestProxy<T> {
      * @return
      */
     protected abstract String getDomain();
-
-    /**
-     * 获取公共参数
-     *
-     * @return
-     */
-    protected abstract TreeMap<String, String> getCommonParamMap();
 
 
     protected abstract TreeMap<String, String> getHeader();
@@ -140,6 +128,8 @@ public abstract class AbsHttpRequestProxy<T> {
         requestQueue.add(request);
     }
 
+    private Gson mGson = new Gson();
+
 
     /**
      * post方式请求
@@ -150,13 +140,11 @@ public abstract class AbsHttpRequestProxy<T> {
 
         if (format == HttpReqParam.DataFormat.MAP) {// MAP格式的数据
             // 公共参数
-            TreeMap<String, String> params = getCommonParamMap();
-            if (params == null) {
-                params = new TreeMap<String, String>();
-            }
+            TreeMap<String, String> params = new TreeMap<String, String>();
+
             // 请求参数
             params.putAll(getRequestParams());
-            request = new GsonRequestEX<T>(Method.POST, requestUrl,gzip, clazz, null,
+            request = new GsonRequestEX<T>(Method.POST, requestUrl, gzip, clazz, null,
                     params, new Listener<T>() {
 
                 @Override
@@ -170,24 +158,11 @@ public abstract class AbsHttpRequestProxy<T> {
                     listener.onFailed(error);
                 }
             });
-        }else if(format == HttpReqParam.DataFormat.JSON){ // JSON格式的数据
+        } else if (format == HttpReqParam.DataFormat.JSON) { // JSON格式的数据
             try {
-                // 公共参数
-                JSONObject jobj = new JSONObject();
-                TreeMap<String, String> params = getCommonParamMap();
-                if(params != null){
-                    for(Map.Entry<String,String> entry : params.entrySet()){
-                        jobj.put(entry.getKey(),entry.getValue());
-                    }
-                }
-                // 请求参数
-                TreeMap<String, Object> reqParams = getRequestParamMap();
-                if(reqParams != null){
-                    for(Map.Entry<String,Object> entry : reqParams.entrySet()){
-                        jobj.put(entry.getKey(),entry.getValue());
-                    }
-                }
-                request = new JsonObjectRequestEX(requestUrl, jobj, clazz, gzip, new Listener<T>() {
+                String reqParam = getRequestJsonString();
+
+                request = new JsonObjectRequestEX<T>(Method.POST, requestUrl, reqParam, clazz, gzip, new Listener<T>() {
                     @Override
                     public void onResponse(T response) {
                         // 请求成功
@@ -222,7 +197,7 @@ public abstract class AbsHttpRequestProxy<T> {
 
 
     /**
-     * 获取请求参数
+     * 获取Map格式请求参数
      */
     private TreeMap<String, String> getRequestParams() {
         TreeMap<String, String> filedMap = new TreeMap<String, String>();
@@ -258,63 +233,10 @@ public abstract class AbsHttpRequestProxy<T> {
     }
 
     /**
-     * 获取请求参数
+     * 获取Json类型的请求参数
      */
-    protected TreeMap<String, Object> getRequestParamMap() {
-        TreeMap<String, Object> filedMap = new TreeMap<String, Object>();
-        // 反射publicFiled类的所有字段
-        Class cla = requestParamBody.getClass();
-
-        // 获得该类下面所有的字段集合
-        Field[] filed = cla.getDeclaredFields();
-        for (Field fd : filed) {
-            String filedName = fd.getName();
-            String firstLetter = filedName.substring(0, 1).toUpperCase(); // 获得字段第一个字母大写
-            String getMethodName = "get" + firstLetter + filedName.substring(1); // 转换成字段的get方法
-
-            try {
-                java.lang.reflect.Method getMethod = cla.getMethod(getMethodName, new Class[]{});
-                Object value = getMethod.invoke(requestParamBody, new Object[]{}); // 这个对象字段get方法的值
-                filedMap.put(filedName, value); // 添加到Map集合
-
-            } catch (SecurityException e) {
-                e.printStackTrace();
-            } catch (NoSuchMethodException e) {
-                e.printStackTrace();
-            } catch (IllegalArgumentException e) {
-                e.printStackTrace();
-            } catch (IllegalAccessException e) {
-                e.printStackTrace();
-            } catch (InvocationTargetException e) {
-                e.printStackTrace();
-            }
-
-        }
-        return filedMap;
-    }
-
-    /**
-     * 获取公共请求参数
-     *
-     * @return
-     */
-    private String getCommonParamString() {
-        TreeMap<String, String> commonParams = getCommonParamMap();
-        if (commonParams == null) {
-            return "";
-        }
-        StringBuilder sb = new StringBuilder();
-        int paramNum = 0;
-        for (Map.Entry entry : commonParams.entrySet()) {
-            sb.append(entry.getKey() + "=" + entry.getValue());
-            if (paramNum != commonParams.size() - 1) {
-                sb.append("&");
-            }
-            paramNum++;
-        }
-
-        return sb.toString();
-
+    protected String getRequestJsonString() {
+        return mGson.toJson(requestParamBody);
     }
 
 
@@ -346,9 +268,12 @@ public abstract class AbsHttpRequestProxy<T> {
         StringBuilder builder = new StringBuilder(buildRequestDomain());
         builder.append(protocol);
         builder.append("?");
-        builder.append(getCommonParamString());
+        int i = 0;
         for (Map.Entry<String, String> entry : params.entrySet()) {
-            builder.append("&").append(entry.getKey()).append("=")
+            if (i++ > 0) {
+                builder.append("&");
+            }
+            builder.append(entry.getKey()).append("=")
                     .append(entry.getValue());
         }
         return builder.toString();

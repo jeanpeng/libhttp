@@ -1,4 +1,5 @@
 apply plugin: 'com.android.library'
+apply plugin: 'maven'
 apply plugin: 'com.github.dcendents.android-maven'
 
 group='com.github.jeanpeng'
@@ -29,3 +30,28 @@ dependencies {
     compile 'dev.dworks.libs:volleyplus:+'
     compile 'com.google.code.gson:gson:2.6.2'
 }
+
+/*
+uploadArchives {
+    configuration = configurations.archives
+    repositories {
+        mavenDeployer {
+            pom.groupId = GROUP_ID
+            pom.artifactId = POM_ARTIFACT_ID
+            pom.version = VERSION_NAME
+
+            repository(url: MAVEN_REPO_RELEASE_URL) {
+                authentication(userName: NEXUS_USERNAME, password: NEXUS_PASSWORD)
+            }
+            pom.project {
+                name POM_NAME
+                packaging POM_PACKAGING
+                description POM_DESCRIPTION
+            }
+        }
+    }
+}
+
+artifacts {
+    archives file('library.aar')
+}*/
