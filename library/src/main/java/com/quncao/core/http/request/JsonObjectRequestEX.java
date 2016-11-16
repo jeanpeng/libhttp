@@ -15,6 +15,7 @@ import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.Map;
 import java.util.zip.GZIPInputStream;
 
 /**
@@ -25,7 +26,6 @@ import java.util.zip.GZIPInputStream;
 public class JsonObjectRequestEX<T> extends JsonRequest<T> {
     private final Gson mGson = new Gson();
     private final Class<T> mClazz;
-    private final boolean mGzip;
 
     /**
      * Creates a new request.
@@ -37,11 +37,10 @@ public class JsonObjectRequestEX<T> extends JsonRequest<T> {
      * @param listener      Listener to receive the JSON response
      * @param errorListener Error listener, or null to ignore errors.
      */
-    public JsonObjectRequestEX(int method, String url, String jsonRequest, Class<T> clazz, boolean gzip,
+    public JsonObjectRequestEX(int method, String url, String jsonRequest, Class<T> clazz,
                                Response.Listener<T> listener, Response.ErrorListener errorListener) {
         super(method, url, jsonRequest, listener, errorListener);
         this.mClazz = clazz;
-        this.mGzip = gzip;
     }
 
     /*public JsonObjectRequestEX(int method, String url, String jsonRequest, Class<T> clazz, boolean gzip,
@@ -64,8 +63,10 @@ public class JsonObjectRequestEX<T> extends JsonRequest<T> {
     @Override
     protected Response<T> parseNetworkResponse(NetworkResponse response) {
         String json = "";
+        Map<String,String> header = response.headers;
+        String encoding = header.get("Content-Encoding");
         try {
-            if (mGzip) {
+            if (encoding != null && encoding.equalsIgnoreCase("gzip")) {
                 GZIPInputStream gStream = new GZIPInputStream(new ByteArrayInputStream(response.data));
                 InputStreamReader reader = new InputStreamReader(gStream);
                 BufferedReader in = new BufferedReader(reader);
@@ -80,12 +81,12 @@ public class JsonObjectRequestEX<T> extends JsonRequest<T> {
                 json = new String(
                         response.data, HttpHeaderParser.parseCharset(response.headers));
             }
-            return Response.success(
-                    mGson.fromJson(json, mClazz), HttpHeaderParser.parseCacheHeaders(response));
         } catch (IOException e) {
             return Response.error(new ParseError());
         } catch (JsonSyntaxException e) {
             return Response.error(new ParseError(e));
         }
+        return Response.success(
+                mGson.fromJson(json, mClazz), HttpHeaderParser.parseCacheHeaders(response));
     }
 }

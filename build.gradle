@@ -17,7 +17,6 @@ allprojects {
     repositories {
         mavenCentral()
         jcenter()
-        //maven{ url 'http://192.168.30.12:8081/nexus/content/repositories/android/'}
     }
 }
 

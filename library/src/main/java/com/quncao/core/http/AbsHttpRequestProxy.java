@@ -37,7 +37,6 @@ public abstract class AbsHttpRequestProxy<T> {
     protected HttpReqMethod method;
     protected HttpReqParam.DataFormat format;
     protected String tag;
-    protected boolean gzip = false;
     protected boolean cache = false;
 
 
@@ -98,7 +97,7 @@ public abstract class AbsHttpRequestProxy<T> {
         RequestQueue requestQueue = HttpRequestManager.getInstance().getRequestQueue();
         Map<String, String> params = getRequestParams();
         String requestUrl = buildGetRequestUrl(protocal, params);
-        request = new GsonRequestEX<T>(requestUrl, clazz, gzip, null,
+        request = new GsonRequestEX<T>(requestUrl, clazz, null,
                 new Listener<T>() {
                     @Override
                     public void onResponse(T response) {
@@ -144,7 +143,7 @@ public abstract class AbsHttpRequestProxy<T> {
 
             // 请求参数
             params.putAll(getRequestParams());
-            request = new GsonRequestEX<T>(Method.POST, requestUrl, gzip, clazz, null,
+            request = new GsonRequestEX<T>(Method.POST, requestUrl, clazz, null,
                     params, new Listener<T>() {
 
                 @Override
@@ -162,7 +161,7 @@ public abstract class AbsHttpRequestProxy<T> {
             try {
                 String reqParam = getRequestJsonString();
 
-                request = new JsonObjectRequestEX<T>(Method.POST, requestUrl, reqParam, clazz, gzip, new Listener<T>() {
+                request = new JsonObjectRequestEX<T>(Method.POST, requestUrl, reqParam, clazz, new Listener<T>() {
                     @Override
                     public void onResponse(T response) {
                         // 请求成功

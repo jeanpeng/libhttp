@@ -16,7 +16,6 @@ public class HttpRequestProxy extends AbsHttpRequestProxy {
         private RequestListener<T> listener;
         private Object requestParamBody;
         private String tag;
-        private boolean gzip;
         private boolean cache;
 
         public Builder() {
@@ -34,10 +33,6 @@ public class HttpRequestProxy extends AbsHttpRequestProxy {
             return this;
         }
 
-        public Builder gzip(boolean isGzip) {
-            this.gzip = isGzip;
-            return this;
-        }
 
         public Builder cache(boolean isCache) {
             this.cache = cache;
@@ -53,7 +48,6 @@ public class HttpRequestProxy extends AbsHttpRequestProxy {
         this.listener = builder.listener;
         this.requestParamBody = builder.requestParamBody;
         this.tag = builder.tag;
-        this.gzip = builder.gzip;
         this.cache = builder.cache;
         HttpReqParam annotation = requestParamBody.getClass().getAnnotation(
                 HttpReqParam.class);

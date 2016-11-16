@@ -21,27 +21,27 @@ import java.util.zip.GZIPInputStream;
  * 继承了GsonRequest，支持gzip
  */
 
-public class GsonRequestEX<T> extends GsonRequest{
+public class GsonRequestEX<T> extends GsonRequest {
     private final Gson mGson = new Gson();
     private final Class<T> mClazz;
-    private boolean mGzip;
-    public GsonRequestEX(String url, Class clazz, boolean gzip,Map headers, Response.Listener listener, Response.ErrorListener errorListener) {
+
+    public GsonRequestEX(String url, Class clazz, Map headers, Response.Listener listener, Response.ErrorListener errorListener) {
         super(url, clazz, headers, listener, errorListener);
         this.mClazz = clazz;
-        this.mGzip = gzip;
     }
 
-    public GsonRequestEX(int type, String url, boolean gzip,Class clazz, Map headers, Map params, Response.Listener listener, Response.ErrorListener errorListener) {
+    public GsonRequestEX(int type, String url, Class clazz, Map headers, Map params, Response.Listener listener, Response.ErrorListener errorListener) {
         super(type, url, clazz, headers, params, listener, errorListener);
         this.mClazz = clazz;
-        this.mGzip = gzip;
     }
 
     @Override
     protected Response<T> parseNetworkResponse(NetworkResponse response) {
         String json = "";
+        Map<String, String> header = response.headers;
+        String encoding = header.get("Content-Encoding");
         try {
-            if (mGzip) {
+            if (encoding != null && encoding.equalsIgnoreCase("gzip")) {
                 GZIPInputStream gStream = new GZIPInputStream(new ByteArrayInputStream(response.data));
                 InputStreamReader reader = new InputStreamReader(gStream);
                 BufferedReader in = new BufferedReader(reader);
@@ -56,12 +56,12 @@ public class GsonRequestEX<T> extends GsonRequest{
                 json = new String(
                         response.data, HttpHeaderParser.parseCharset(response.headers));
             }
-            return Response.success(
-                    mGson.fromJson(json, mClazz), HttpHeaderParser.parseCacheHeaders(response));
         } catch (IOException e) {
             return Response.error(new ParseError());
         } catch (JsonSyntaxException e) {
             return Response.error(new ParseError(e));
         }
+        return Response.success(
+                mGson.fromJson(json, mClazz), HttpHeaderParser.parseCacheHeaders(response));
     }
 }
